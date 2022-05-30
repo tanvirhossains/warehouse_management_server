@@ -20,24 +20,50 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
     try {
         await client.connect()
-        const mobilecollection = client.db("mobileCollections").collection("Products")
+        const mobileCollection = client.db("mobileCollections").collection("Products")
         console.log('no problem')
 
-        //all products
+        //getting all products
         app.get('/product', async (req, res) => {
             const query = {}
-            const cursor = mobilecollection.find(query)
+            const cursor = mobileCollection.find(query)
             const products = await cursor.toArray();
             res.send(products)
         })
 
-        //single Product
-        app.get('/product/:id', async (req,res ) =>{
+        //getting single Product
+        app.get('/product/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {_id: ObjectId(id)} 
-            const product= await mobilecollection.findOne(query)
+            const query = { _id: ObjectId(id) }
+            const product = await mobileCollection.findOne(query)
             res.send(product)
         })
+
+
+        app.put('/product/:id', async (req, res) => {
+            const id = req.params.id
+            const update = req.body;
+            const query = { _id: ObjectId(id) }
+            const options = { upsert: true }
+            const updatedDoc = {
+                $set: {
+                    quantity: update.quantity
+                }
+            }
+            const result = await mobileCollection.updateOne(query, updatedDoc, options)
+            res.send(result)
+        })
+
+
+        //positing new item to the database 
+        app.post('/product', async (req, res) => {
+            const product = req.body;
+            const result = await mobileCollection.insertOne(product);
+            res.send({ success: true, result })
+
+        })
+
+
 
     }
     finally {
